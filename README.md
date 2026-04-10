@@ -56,3 +56,34 @@ message contenant ses coordonnees.
 
 ## Screenshot
 ![Description de l'image](image/screenshot1.png)
+
+## Partie 2
+
+### Lancement
+
+Terminal 1 :
+
+```bash
+ros2 run turtlesim turtlesim_node
+```
+
+Terminal 2 :
+
+```bash
+source ~/ros2_ws/install/setup.bash
+ros2 run turtle_scanner_josue spawn_target_node
+```
+
+Terminal 3 :
+
+```bash
+source ~/ros2_ws/install/setup.bash
+ros2 run turtle_scanner_josue turtle_scanner_node
+```
+
+### Verification
+
+```bash
+ros2 topic echo /turtle1/pose
+ros2 topic echo /turtle_target/pose
+```
