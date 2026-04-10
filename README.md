@@ -104,10 +104,26 @@ ros2 run turtle_scanner_josue turtle_scanner_node
 valeur choisi = 6.0
 
 `Kp_lin` Valeur trop faible = la tortue avance lentement et le balayage prend plus de temps 
-Valeur trop forte =la tortue avance trop vite, peut depasser plus facilement la cible et rendre la trajectoire moins stable
-valeur choisi = 1..2
+Valeur trop forte = la tortue avance trop vite, peut depasser plus facilement la cible et rendre la trajectoire moins stable
+valeur choisi = 1.2
 
 ### Resultat attendu
 
 `turtle1` parcourt la fenetre TurtleSim en serpentin de bas en haut. Quand tous les waypoints sont
 atteints, le noeud publie une vitesse nulle et affiche `Balayage termine`.
+
+## Partie 4
+
+### Lancement
+```bash
+source install/setup.bash
+ros2 run turtlesim turtlesim_node
+ros2 run turtle_scanner_josue spawn_target_node
+ros2 run turtle_scanner_josue turtle_scanner_node
+```
+
+### Verification
+
+```bash
+ros2 topic echo /target_detected
+```

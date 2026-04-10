@@ -5,6 +5,7 @@ import math
 from geometry_msgs.msg import Twist
 import rclpy
 from rclpy.node import Node
+from std_msgs.msg import Bool
 from turtlesim.msg import Pose
 
 
@@ -43,6 +44,14 @@ class TurtleScannerNode(Node):
         # Publisher de commande en vitesse pour deplacer turtle1.
         self.cmd_vel_publisher = self.create_publisher(Twist, "/turtle1/cmd_vel", 10)
 
+        # Partie 4 - Question 3 :
+        # Publisher qui indique si la cible est detectee ou non.
+        self.target_detected_publisher = self.create_publisher(
+            Bool,
+            "/target_detected",
+            10,
+        )
+
         # Partie 3 - Question 1 :
         # Parametres du balayage en serpentin.
         self.nb_lignes = 5
@@ -63,6 +72,8 @@ class TurtleScannerNode(Node):
         self.waypoints = self.generate_serpentine_waypoints()
         self.current_waypoint_index = 0
         self.scan_completed = False
+        self.target_detected = False
+        self.detection_radius = 1.5
 
         # Partie 3 - Question 4 :
         # Timer ROS 2 appele regulierement pour executer une etape du balayage.
@@ -113,10 +124,43 @@ class TurtleScannerNode(Node):
     def publish_stop_command(self):
         self.cmd_vel_publisher.publish(Twist())
 
+    def publish_detection_state(self, detected):
+        detection_msg = Bool()
+        detection_msg.data = detected
+        self.target_detected_publisher.publish(detection_msg)
+
     def scan_step(self):
         # On attend d'abord la pose de la tortue scanner.
         if not self.pose_scanner_received:
             return
+        
+        # Partie 4 - Question 3 :
+        # Publication de False tant que la cible n'est pas detectee.
+        self.publish_detection_state(self.target_detected)
+
+        # Partie 4 - Questions 1 et 2 :
+        # Verification de la distance entre la tortue scanner et la cible.
+        if self.pose_target_received and not self.target_detected:
+            scanner_position = (self.pose_scanner.x, self.pose_scanner.y)
+            target_position = (self.pose_target.x, self.pose_target.y)
+            target_distance = self.compute_distance(scanner_position, target_position)
+
+            if target_distance < self.detection_radius:
+                self.target_detected = True
+                self.publish_stop_command()
+                self.publish_detection_state(True)
+                self.get_logger().info(
+                    f"Cible detectee a ({self.pose_target.x:.2f}, {self.pose_target.y:.2f}) !"
+                )
+                return
+
+        # Partie 4 - Question 2 :
+        # Si la cible est detectee, on interrompt le balayage et on arrete la tortue.
+        if self.target_detected:
+            self.publish_stop_command()
+            self.publish_detection_state(True)
+            return
+
 
         # Partie 3 - Question 5 :
         # Lorsque tous les waypoints sont parcourus, on arrete la tortue.
