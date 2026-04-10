@@ -146,7 +146,7 @@ class TurtleScannerNode(Node):
         detection_msg.data = detected
         self.target_detected_publisher.publish(detection_msg)
 
- def wait_for_required_services(self):
+    def wait_for_required_services(self):
         while not self.spawn_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info("Waiting for /spawn service...")
 
