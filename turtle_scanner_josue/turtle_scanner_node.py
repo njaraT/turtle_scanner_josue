@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 
 import math
+import random
 
 from geometry_msgs.msg import Twist
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Bool
+from turtle_interfaces.srv import ResetMission
 from turtlesim.msg import Pose
+from turtlesim.srv import Kill
+from turtlesim.srv import Spawn
 
 
 class TurtleScannerNode(Node):
@@ -50,6 +54,19 @@ class TurtleScannerNode(Node):
             Bool,
             "/target_detected",
             10,
+        )
+
+        # Partie 5 - Question 3 :
+        # Clients de service pour supprimer et recreer la cible.
+        self.spawn_client = self.create_client(Spawn, "/spawn")
+        self.kill_client = self.create_client(Kill, "/kill")
+
+        # Partie 5 - Question 3 :
+        # Service /reset_mission expose par le noeud scanner.
+        self.reset_mission_service = self.create_service(
+            ResetMission,
+            "/reset_mission",
+            self.reset_mission_callback,
         )
 
         # Partie 3 - Question 1 :
@@ -128,6 +145,78 @@ class TurtleScannerNode(Node):
         detection_msg = Bool()
         detection_msg.data = detected
         self.target_detected_publisher.publish(detection_msg)
+
+ def wait_for_required_services(self):
+        while not self.spawn_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info("Waiting for /spawn service...")
+
+        while not self.kill_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info("Waiting for /kill service...")
+
+    def spawn_target_at(self, x_value, y_value):
+        spawn_request = Spawn.Request()
+        spawn_request.x = x_value
+        spawn_request.y = y_value
+        spawn_request.theta = 0.0
+        spawn_request.name = "turtle_target"
+
+        future = self.spawn_client.call_async(spawn_request)
+        rclpy.spin_until_future_complete(self, future)
+        return future.result()
+
+    def kill_target(self):
+        kill_request = Kill.Request()
+        kill_request.name = "turtle_target"
+
+        future = self.kill_client.call_async(kill_request)
+        rclpy.spin_until_future_complete(self, future)
+        return future.result()
+
+    def reset_scan_state(self):
+        # Partie 5 - Question 3.c :
+        # Reinitialisation du serpentin depuis le debut.
+        self.waypoints = self.generate_serpentine_waypoints()
+        self.current_waypoint_index = 0
+        self.scan_completed = False
+        self.target_detected = False
+        self.publish_stop_command()
+        self.publish_detection_state(False)
+
+    def reset_mission_callback(self, request, response):
+        # Partie 5 - Questions 3.a et 3.b :
+        # Gestion du reset avec cible aleatoire ou coordonnees imposees.
+        try:
+            self.wait_for_required_services()
+
+            try:
+                self.kill_target()
+            except Exception:
+                # Si la tortue n'existe pas encore, on continue simplement.
+                pass
+
+            if request.random_target:
+                target_x = random.uniform(1.0, 10.0)
+                target_y = random.uniform(1.0, 10.0)
+            else:
+                target_x = request.target_x
+                target_y = request.target_y
+
+            self.spawn_target_at(target_x, target_y)
+
+            self.pose_target_received = False
+            self.reset_scan_state()
+
+            response.success = True
+            response.message = (
+                f"Mission reinitialisee avec turtle_target en ({target_x:.2f}, {target_y:.2f})"
+            )
+            self.get_logger().info(response.message)
+        except Exception as error:
+            response.success = False
+            response.message = f"Echec du reset mission: {error}"
+            self.get_logger().error(response.message)
+
+        return response
 
     def scan_step(self):
         # On attend d'abord la pose de la tortue scanner.

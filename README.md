@@ -14,6 +14,7 @@ colcon build
 ```sh
 cd src
 git clone git@github.com:njaraT/turtle_scanner_josue.git
+git clone git@github.com:njaraT/turtle_interfaces.git
 ```
 
 ### 3. Build & source
@@ -99,13 +100,21 @@ ros2 run turtle_scanner_josue turtle_scanner_node
 ```
 
 ### Noeud
-`Kp_ang` Valeur trop faible = la tortue s'aligne lentement vers le waypoint et le changement de direction est mou
- Valeur trop forte = la tortue tourne trop brutalement et peut osciller autour de la direction desirée
-valeur choisi = 6.0
+`Kp_ang` 
 
-`Kp_lin` Valeur trop faible = la tortue avance lentement et le balayage prend plus de temps 
+Valeur trop faible = la tortue s'aligne lentement vers le waypoint et le changement de direction est mou
+
+Valeur trop forte = la tortue tourne trop brutalement et peut osciller autour de la direction desirée
+
+Valeur choisi = 6.0
+
+`Kp_lin` 
+
+Valeur trop faible = la tortue avance lentement et le balayage prend plus de temps 
+
 Valeur trop forte = la tortue avance trop vite, peut depasser plus facilement la cible et rendre la trajectoire moins stable
-valeur choisi = 1.2
+
+Valeur choisi = 1.2
 
 ### Resultat attendu
 
@@ -126,4 +135,12 @@ ros2 run turtle_scanner_josue turtle_scanner_node
 
 ```bash
 ros2 topic echo /target_detected
+```
+
+## Partie 5
+
+### Test
+
+```bash
+ros2 service call /reset_mission turtle_interfaces/srv/ResetMission "{random_target: true}"
 ```
