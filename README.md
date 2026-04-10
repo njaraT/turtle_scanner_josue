@@ -53,3 +53,6 @@ ros2 run turtle_scanner_josue spawn_target_node
 
 Une deuxieme tortue apparait dans TurtleSim avec le nom `turtle_target`, et le noeud affiche un
 message contenant ses coordonnees.
+
+## Screenshot
+![Description de l'image](image/screenshot1.png)
